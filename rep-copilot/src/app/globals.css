@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 180 4% 26%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 180 4% 26%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 180 4% 26%;
+
+    --primary: 323 100% 26%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 160 9% 93%;
+    --secondary-foreground: 180 4% 26%;
+
+    --muted: 160 9% 93%;
+    --muted-foreground: 167 13% 65%;
+
+    --accent: 160 9% 93%;
+    --accent-foreground: 180 4% 26%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 167 13% 85%;
+    --input: 167 13% 85%;
+    --ring: 43 100% 47%;
+
+    --radius: 0.25rem;
+
+    /* Extended AZ brand colors for direct use */
+    --mulberry: 323 100% 26%;
+    --dark-mulberry: 323 100% 15%;
+    --gold: 43 100% 47%;
+    --magenta: 330 100% 41%;
+    --light-blue: 186 60% 64%;
+    --graphite: 180 4% 26%;
+    --platinum: 167 13% 65%;
+    --light-platinum: 160 9% 93%;
+  }
+
+  .dark {
+    --background: 180 4% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 180 4% 10%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 180 4% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 323 80% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 180 4% 20%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 180 4% 20%;
+    --muted-foreground: 167 13% 65%;
+
+    --accent: 180 4% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 180 4% 20%;
+    --input: 180 4% 20%;
+    --ring: 43 100% 47%;
+  }
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+
+  /* AZ brand colors */
+  --color-mulberry: hsl(var(--mulberry));
+  --color-dark-mulberry: hsl(var(--dark-mulberry));
+  --color-gold: hsl(var(--gold));
+  --color-magenta: hsl(var(--magenta));
+  --color-light-blue: hsl(var(--light-blue));
+  --color-graphite: hsl(var(--graphite));
+  --color-platinum: hsl(var(--platinum));
+  --color-light-platinum: hsl(var(--light-platinum));
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Roboto Slab", Georgia, "Times New Roman", serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--mulberry) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--mulberry) / 0.5);
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Enhance selection */
+::selection {
+  background-color: hsl(var(--mulberry) / 0.2);
+  color: hsl(var(--foreground));
+}
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

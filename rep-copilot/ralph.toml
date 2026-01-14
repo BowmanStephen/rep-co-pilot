@@ -1,0 +1,11 @@
+# ralph.toml - Rep Copilot CRM Enhancement Loop
+
+project_name = "Rep Copilot CRM ResponseView"
+default_max_iterations = 50
+default_completion_promises = ["CRM_COMPLETE", "ALL_PHASES_COMPLETE"]
+coverage_lines = 80
+
+[phases]
+phase1_iterations = 50
+phase2_iterations = 50
+phase3_iterations = 50
