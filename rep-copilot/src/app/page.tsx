@@ -6,8 +6,7 @@ import Header from '@/components/Header';
 import TabBar, { TabType } from '@/components/TabBar';
 import PromptCard from '@/components/PromptCard';
 import SmartInputDock from '@/components/SmartInputDock';
-import ResponseView from '@/components/ResponseView';
-import LoadingSkeleton from '@/components/LoadingSkeleton';
+import StreamingResponseView from '@/components/StreamingResponseView';
 import CoachingCard, { CoachingCardProps } from '@/components/CoachingCard';
 import ContextStatusBar from '@/components/ContextStatusBar';
 import { useAppContext } from '@/services/contextDetection';
@@ -93,13 +92,12 @@ const sectionDescriptions: Record<TabType, string> = {
 };
 
 export default function Home() {
-  // Access context detection service
-  const { time, user, location } = useAppContext();
+  // Context detection service is available but not currently displayed
+  useAppContext();
 
   const [activeTab, setActiveTab] = useState<TabType>('reporting');
   const [showResponse, setShowResponse] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
   const [coachingEnabled, setCoachingEnabled] = useState(true);
   const [coachingResult, setCoachingResult] = useState<CoachingResult | null>(null);
 
@@ -115,13 +113,8 @@ export default function Home() {
       }
     }
     
-    setIsLoading(true);
-
-    // Simulate AI response delay
-    setTimeout(() => {
-      setIsLoading(false);
-      setShowResponse(true);
-    }, 2000);
+    // Navigate to streaming response view immediately
+    setShowResponse(true);
   };
 
   const handleSubmit = (text: string) => {
@@ -136,13 +129,8 @@ export default function Home() {
       }
     }
     
-    setIsLoading(true);
-
-    // Simulate AI response delay
-    setTimeout(() => {
-      setIsLoading(false);
-      setShowResponse(true);
-    }, 2000);
+    // Navigate to streaming response view immediately
+    setShowResponse(true);
   };
 
   const handleDismissCoaching = () => {
@@ -152,10 +140,15 @@ export default function Home() {
 
   if (showResponse) {
     return (
-      <ResponseView
-        onBack={() => setShowResponse(false)}
-        prompt={selectedPrompt}
+      <StreamingResponseView
+        onBack={() => {
+          setShowResponse(false);
+          setSelectedPrompt('');
+        }}
+        initialPrompt={selectedPrompt}
         tabType={activeTab}
+        coachingEnabled={coachingEnabled}
+        onCoachingChange={setCoachingEnabled}
       />
     );
   }
@@ -198,9 +191,7 @@ export default function Home() {
     );
   }
 
-  if (isLoading) {
-    return <LoadingSkeleton />;
-  }
+  // Note: Loading state is now handled within StreamingResponseView
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary/30 to-background pb-28">

@@ -6,12 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Rep Co-Pilot** - A unified AI-powered interface for AstraZeneca Field Representatives that consolidates Reporting, CRM, and Compliance workflows.
 
-**Client:** Ajitesh Khosla (AstraZeneca)  
+**Client:** Ajitesh Khosla (AstraZeneca)
 **Designer/Developer:** Stephen Bowman (UX Designer learning to code with AI)
+
+**Location:** `rep-copilot/` subdirectory
 
 ---
 
-## Development Commands
+## Quick Start
 
 ```bash
 cd rep-copilot/
@@ -25,9 +27,9 @@ npm run lint         # Run ESLint
 
 ## Architecture Overview
 
-### State Management Pattern (3 Primary Views)
+### State Management Pattern (4 Primary Views)
 
-The app uses **conditional rendering** in `src/app/page.tsx` to manage three distinct view states:
+The app uses **conditional rendering** in `rep-copilot/src/app/page.tsx` to manage four distinct view states:
 
 ```
 1. Prompt Selection View (default)
@@ -52,7 +54,7 @@ The app uses **conditional rendering** in `src/app/page.tsx` to manage three dis
 
 ### Compliance Detection System
 
-**Location:** `src/app/page.tsx:checkCompliance()`
+**Location:** `rep-copilot/src/app/page.tsx:checkCompliance()`
 
 The app includes client-side compliance guardrails that detect violations before submission:
 
@@ -69,33 +71,37 @@ When `coachingEnabled=true`, the `checkCompliance()` function runs on every prom
 ## Component Structure
 
 ```
-src/
-├── app/
-│   ├── layout.tsx          # Root layout (no fonts yet - metadata only)
-│   ├── page.tsx            # Main page: tab state, compliance logic, view routing
-│   └── globals.css         # Tailwind v4 + AZ brand colors via @theme
+rep-copilot/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx          # Root layout (no fonts yet - metadata only)
+│   │   ├── page.tsx            # Main page: tab state, compliance logic, view routing
+│   │   └── globals.css         # Tailwind v4 + AZ brand colors via @theme
+│   │
+│   ├── components/
+│   │   ├── Header.tsx          # Top bar with Mulberry gradient, logo, user avatar
+│   │   ├── TabBar.tsx          # 3 tabs with animated active indicator (Framer Motion)
+│   │   ├── PromptCard.tsx      # Clickable prompts with ripple effects and staggered animations
+│   │   ├── SmartInputDock.tsx  # Bottom dock: text, mic, camera, wand, coaching toggle
+│   │   ├── ResponseView.tsx    # AI response display with chart cards and follow-ups
+│   │   ├── CoachingCard.tsx    # Compliance warning/stop UI
+│   │   ├── LoadingSkeleton.tsx # Loading state during AI response
+│   │   ├── TypingIndicator.tsx # Animated dots for streaming responses
+│   │   ├── MagicWandEffect.tsx  # Sparkle animation for prompt enhancement
+│   │   └── ui/                 # shadcn/ui components (Button, Input, Card, etc.)
+│   │
+│   └── lib/
+│       └── utils.ts            # cn() helper for Tailwind class merging
 │
-├── components/
-│   ├── Header.tsx          # Top bar with Mulberry gradient, logo, user avatar
-│   ├── TabBar.tsx          # 3 tabs with animated active indicator (Framer Motion)
-│   ├── PromptCard.tsx      # Clickable prompts with ripple effects and staggered animations
-│   ├── SmartInputDock.tsx  # Bottom dock: text, mic, camera, wand, coaching toggle
-│   ├── ResponseView.tsx    # AI response display with chart cards and follow-ups
-│   ├── CoachingCard.tsx    # Compliance warning/stop UI
-│   ├── LoadingSkeleton.tsx # Loading state during AI response
-│   ├── TypingIndicator.tsx # Animated dots for streaming responses
-│   ├── MagicWandEffect.tsx  # Sparkle animation for prompt enhancement
-│   └── ui/                 # shadcn/ui components (Button, Input, Card, etc.)
-│
-└── lib/
-    └── utils.ts            # cn() helper for Tailwind class merging
+├── package.json                # Dependencies and scripts
+└── tsconfig.json               # TypeScript configuration
 ```
 
 ---
 
 ## Design Tokens (AZ Brand)
 
-### Colors (defined in `src/app/globals.css`)
+### Colors (defined in `rep-copilot/src/app/globals.css`)
 
 | Token | HSL Value | Usage |
 |-------|-----------|-------|
@@ -128,17 +134,18 @@ Usage: `className="bg-mulberry text-white"`
 
 ## Key Technologies
 
-| Technology | Purpose |
-|------------|---------|
-| **Next.js 16.1.1** | React framework with App Router |
-| **React 19.2.3** | UI library |
-| **Tailwind CSS v4** | Styling with @theme for custom colors |
-| **Framer Motion 12** | Animations (spring physics, stagger effects) |
-| **Radix UI** | Accessible primitives (tabs, toggle, tooltip, avatar) |
-| **Lucide React** | Icon library |
-| **AI SDK (Vercel)** | `/api/enhance-prompt` endpoint for Magic Wand |
-| **class-variance-authority** | Component variant patterns |
-| **clsx + tailwind-merge** | `cn()` helper for class merging |
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Next.js** | 16.1.1 | React framework with App Router |
+| **React** | 19.2.3 | UI library |
+| **Tailwind CSS** | v4 | Styling with @theme for custom colors |
+| **Framer Motion** | 12.26.2 | Animations (spring physics, stagger effects) |
+| **Radix UI** | Latest | Accessible primitives (tabs, toggle, tooltip, avatar) |
+| **Lucide React** | 0.562.0 | Icon library |
+| **AI SDK (Vercel)** | 6.0.33 | `/api/enhance-prompt` endpoint for Magic Wand |
+| **OpenRouter** | 1.5.4 | AI provider integration |
+| **class-variance-authority** | 0.7.1 | Component variant patterns |
+| **clsx + tailwind-merge** | Latest | `cn()` helper for class merging |
 
 ---
 
@@ -146,7 +153,7 @@ Usage: `className="bg-mulberry text-white"`
 
 ### The `cn()` Helper
 
-**Location:** `src/lib/utils.ts`
+**Location:** `rep-copilot/src/lib/utils.ts`
 
 ```tsx
 import { cn } from "@/lib/utils"
@@ -204,7 +211,7 @@ useEffect(() => {
 
 ### 1. Preset Prompts Configuration
 
-**Location:** `src/app/page.tsx` (top of file)
+**Location:** `rep-copilot/src/app/page.tsx` (top of file)
 
 The 15 prompts (5 per section) are defined in a `Record<TabType, string[]>` object. When adding new prompts, update both:
 - `prompts` object (the prompt text)
@@ -218,7 +225,7 @@ When `coachingEnabled=false`, compliance checks are skipped and queries submit i
 
 ### 3. Response View Data
 
-**Location:** `src/components/ResponseView.tsx`
+**Location:** `rep-copilot/src/components/ResponseView.tsx`
 
 Currently uses mock `regionData` array. In production, this will be replaced with actual AI API responses.
 
@@ -272,17 +279,6 @@ The app targets **WCAG 2.1 AA** compliance with:
 
 ---
 
-## When Working With Stephen
-
-- **He's a UX Designer learning to code** - prefers design analogies over jargon
-- **Voice-first workflow** - uses SuperWhisper for transcription
-- **Show first, then explain** - he learns by seeing results
-- **Use Figma/Sketch analogies** - explain technical concepts using design patterns he knows
-- **Celebrate small wins** - acknowledge progress as you go
-- **Check understanding** - ask "Does that make sense?" often
-
----
-
 ## Common Tailwind Class Patterns
 
 ```tsx
@@ -298,3 +294,25 @@ className="bg-card border border-border/60 hover:shadow-[0_4px_12px_rgba(131,0,8
 // Input dock
 className="bg-card border border-border/60 shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
 ```
+
+---
+
+## When Working With Stephen
+
+- **He's a UX Designer learning to code** - prefers design analogies over jargon
+- **Voice-first workflow** - uses SuperWhisper for transcription
+- **Show first, then explain** - he learns by seeing results
+- **Use Figma/Sketch analogies** - explain technical concepts using design patterns he knows
+- **Celebrate small wins** - acknowledge progress as you go
+- **Check understanding** - ask "Does that make sense?" often
+
+---
+
+## Related Documents
+
+- **PRD:** `Rep Copilot PRD.md` - Original product requirements and wireframes
+- **Cursor Rules:** `.cursorrules` - Technical specifications and performance requirements
+
+---
+
+**Last updated:** January 14, 2026
