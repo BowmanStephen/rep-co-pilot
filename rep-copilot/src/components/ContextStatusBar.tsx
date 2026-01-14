@@ -1,26 +1,63 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppContext, getGreeting, getTimePeriodLabel, formatProximity } from '@/services/contextDetection';
-import { MapPin, Clock, Shield, User } from 'lucide-react';
+import { MapPin, Clock } from 'lucide-react';
+import type { DemoProfile } from '@/lib/demo-profiles';
+import {
+  getQuickActions,
+  getTimeStatusLabel,
+  getTimeStatusColor,
+  type QuickAction,
+} from '@/lib/quick-actions';
 
 /**
- * ContextStatusBar - Shows dynamic status based on detected context
+ * ContextStatusBar - Shows adaptive status based on demo profile
  *
  * This component demonstrates the "hide and surface" adaptive interface:
- * - Changes greeting based on time of day
- * - Shows location proximity banner when near an account
- * - Displays role badge for district managers
- * - Surfaces relevant actions based on current context
+ * - Shows greeting based on selected profile
+ * - Displays time context status (Execution Hours, Planning Time, etc.)
+ * - Surfaces relevant quick actions based on profile context
+ * - Updates automatically when profile changes
  */
 export default function ContextStatusBar() {
-  const { time, user, location } = useAppContext();
+  const [profile, setProfile] = useState<DemoProfile | null>(null);
+  const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
+
+  // Listen for profile changes from Header dropdown
+  useEffect(() => {
+    // Import here to avoid circular dependency
+    import('@/lib/demo-profiles').then(({ getProfile }) => {
+      const initialProfile = getProfile('sarah');
+      setProfile(initialProfile);
+      setQuickActions(getQuickActions(initialProfile));
+    });
+
+    const handleProfileChange = (event: CustomEvent) => {
+      const newProfile = event.detail as DemoProfile;
+      setProfile(newProfile);
+      setQuickActions(getQuickActions(newProfile));
+    };
+
+    window.addEventListener('profile-change', handleProfileChange as EventListener);
+
+    return () => {
+      window.removeEventListener('profile-change', handleProfileChange as EventListener);
+    };
+  }, []);
+
+  if (!profile) {
+    return null; // Loading state
+  }
+
+  const timeLabel = getTimeStatusLabel(profile);
+  const timeColor = getTimeStatusColor(profile);
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-4 space-y-3">
-      {/* Time-based Greeting */}
+      {/* Profile-based Greeting */}
       <motion.div
-        key={`greeting-${time.period}`}
+        key={`greeting-${profile.id}-${profile.timeContext}`}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between"
@@ -28,23 +65,17 @@ export default function ContextStatusBar() {
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">
-            {getGreeting(time.period)}, {user.name.split(' ')[0]}!
+            {profile.greeting}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-            time.period === 'execution'
-              ? 'bg-primary/10 text-primary'
-              : 'bg-secondary/50 text-muted-foreground'
-          }`}>
-            {getTimePeriodLabel(time.period)}
-          </span>
+        <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full font-medium border ${timeColor}`}>
+          {timeLabel}
         </div>
       </motion.div>
 
-      {/* Location-based Banner (surfaces only when near account) */}
+      {/* Location-based Banner (shows when near accounts) */}
       <AnimatePresence>
-        {location.nearAccount && location.accountName && (
+        {profile.locationContext === 'near-accounts' && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -57,88 +88,48 @@ export default function ContextStatusBar() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-primary mb-0.5">
-                  Nearby Account Detected
+                  Near Target Accounts
                 </p>
                 <p className="text-sm text-foreground mb-1">
-                  {location.accountName}
+                  {profile.region} Territory
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {formatProximity(location.proximity)} • Last updated: {location.lastUpdate.toLocaleTimeString()}
+                  Quick actions below are optimized for your current location
                 </p>
               </div>
-              <button className="text-xs bg-primary text-white px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors">
-                Check In
-              </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* User Role Badge (shows for district managers) */}
-      <AnimatePresence>
-        {user.role === 'district-manager' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-lg px-3 py-2"
-          >
-            <Shield className="w-4 h-4 text-gold" />
-            <span className="text-xs font-medium text-gold">
-              District Manager View • Territory: {user.territory}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Context-aware Quick Actions */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {time.period === 'morning' && (
-          <>
-            <QuickAction icon="📋" label="Plan Day" />
-            <QuickAction icon="🎯" label="Top Targets" />
-            <QuickAction icon="📊" label="Review Targets" />
-          </>
-        )}
-        {time.period === 'execution' && (
-          <>
-            <QuickAction icon="📍" label="Nearby" />
-            <QuickAction icon="📝" label="Log Call" />
-            <QuickAction icon="💊" label="Product Info" />
-          </>
-        )}
-        {time.period === 'evening' && (
-          <>
-            <QuickAction icon="📈" label="Daily Report" />
-            <QuickAction icon="✅" label="Update CRM" />
-            <QuickAction icon="📅" label="Schedule Tomorrow" />
-          </>
-        )}
-        {time.period === 'night' && (
-          <>
-            <QuickAction icon="🌙" label="Off Hours" />
-            <QuickAction icon="📧" label="Catch-up Email" />
-          </>
-        )}
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`actions-${profile.id}-${profile.timeContext}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center gap-2 overflow-x-auto pb-2"
+        >
+          {quickActions.map((action, index) => (
+            <motion.button
+              key={`${profile.id}-${action.label}-${index}`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={action.onClick}
+              className={`flex items-center gap-1.5 bg-card border border-border/60 hover:border-primary/40 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                action.primary
+                  ? 'bg-primary/10 border-primary/30 hover:bg-primary/15'
+                  : ''
+              }`}
+            >
+              <span>{action.icon}</span>
+              <span>{action.label}</span>
+            </motion.button>
+          ))}
+        </motion.div>
+      </AnimatePresence>
     </div>
-  );
-}
-
-interface QuickActionProps {
-  icon: string;
-  label: string;
-}
-
-function QuickAction({ icon, label }: QuickActionProps) {
-  return (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="flex items-center gap-1.5 bg-card border border-border/60 hover:border-primary/40 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
-    >
-      <span>{icon}</span>
-      <span>{label}</span>
-    </motion.button>
   );
 }
