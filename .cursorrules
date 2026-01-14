@@ -1,0 +1,197 @@
+# Rep Co-Pilot - Cursor Rules
+
+## Project Context
+Rep Co-Pilot is a unified AI-powered command center for Field Representatives that consolidates Reporting, CRM, and Compliance workflows into a single interface.
+
+## Architecture Pattern
+- **Hybrid Bento Grid + Floating Command Dock**
+- Full-screen interface (not sidebar)
+- Collapsible FAB (Floating Action Button) mode for overlay scenarios
+- Profile-based module visibility
+
+## Technical Stack
+
+### Frontend (Primary)
+- **iOS Native App**: Swift/SwiftUI
+- Minimum iOS version: iOS 16+
+- Design system: Apple Human Interface Guidelines
+
+### Backend
+- **API**: Node.js / TypeScript
+- **API Gateway**: AWS API Gateway
+- **AI Services**: Azure OpenAI Service
+- **Data**: Snowflake (Data Lake), Veeva (CRM), Compliance Policy DB
+
+## Design Principles
+
+### Core Principles
+1. **Speed First**: Every interaction should resolve in <3 seconds
+2. **Zero Friction**: Maximum 2 taps to complete any high-frequency task
+3. **Compliance by Default**: Guardrails are invisible until needed
+4. **Conversational Intelligence**: Natural language as the primary interface
+
+### Layout Strategy
+- **Bento Grid**: 3-column grid (responsive: 3 → 2 → 1 column)
+- **Module Cards**: Large cards with `#F5F5F7` background, 24px border radius
+- **Spacing**: 16px gap between cards, 24px padding within cards
+- **Max Width**: 1440px container, centered
+
+### Component Patterns
+- **Chip Cloud**: Full-width pill buttons (12px border radius, white background)
+- **Floating Glass Dock**: Sticky bottom center, glassmorphism effect
+- **Smart Input Dock**: Multimodal input (text, voice, camera) with AI tools
+
+## Code Style Guidelines
+
+### Swift/SwiftUI
+- Use SwiftUI for all UI components
+- Follow MVVM architecture pattern
+- Use descriptive variable names
+- Prefer `@StateObject` over `@ObservedObject` for view models
+- Group related code into extensions
+
+### TypeScript/Node.js
+- Use TypeScript strict mode
+- Prefer async/await over promises
+- Use proper error handling with typed errors
+- Follow REST API conventions
+- Use dependency injection for services
+
+## UI/UX Specifications
+
+### Design Tokens
+```css
+/* Colors */
+--color-background-primary: #FFFFFF;
+--color-background-secondary: #F5F5F7;
+--color-text-primary: #1D1D1F;
+--color-text-secondary: #86868B;
+--color-accent-primary: #007AFF;
+
+/* Typography */
+--font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+--font-size-body: 17px;
+--font-size-caption: 13px;
+
+/* Spacing */
+--spacing-md: 16px;
+--spacing-lg: 24px;
+
+/* Borders */
+--border-radius-md: 12px;
+--border-radius-lg: 24px;
+```
+
+### Responsive Breakpoints
+- Desktop: >1024px (3-column grid)
+- Tablet: 768px-1024px (2-column grid)
+- Mobile: <768px (1-column stack)
+
+## Functional Requirements Priority
+
+### P0 (Critical)
+- Bento Grid Interface (3 modules: Reporting, CRM, Compliance)
+- Smart Input Dock (text, voice, camera input)
+- Compliance Guardrails (Coaching Toggle)
+- 5 preset prompts per module (15 total chips)
+
+### P1 (High Priority)
+- Magic Wand (Prompt Enhancer)
+- Voice input with noise cancellation
+- Camera input with context extraction
+- Module expansion on chip tap
+
+## Performance Requirements
+- Initial app load: <2 seconds (95th percentile)
+- Chip prompt response: <3 seconds (95th percentile)
+- Free-text query response: <5 seconds (95th percentile)
+- Magic Wand enhancement: <1 second (95th percentile)
+- Compliance check: <500ms (99th percentile)
+
+## Security & Compliance
+- OAuth 2.0 + OpenID Connect authentication
+- JWT tokens with 1-hour expiry
+- MFA required for all users
+- TLS 1.3 encryption in transit
+- AES-256 encryption at rest
+- HIPAA compliant
+- All compliance queries must be logged for audit
+
+## Accessibility Requirements
+- WCAG 2.1 AA compliance
+- Full VoiceOver support
+- Dynamic Type support (up to XXXL)
+- Minimum 4.5:1 contrast ratio
+- Full keyboard navigation
+- Clear focus indicators (2px blue outline)
+
+## Error Handling
+- Graceful degradation for service failures
+- Clear, actionable error messages
+- Retry mechanisms for transient failures
+- Offline mode considerations (future)
+
+## Testing Requirements
+- Unit test coverage: 80% minimum
+- Integration tests: 100% of API endpoints
+- E2E tests: 100% of happy paths
+- Accessibility testing: Automated + manual VoiceOver
+
+## Development Workflow
+- Feature flags for gradual rollout
+- Code reviews required
+- Automated CI/CD pipeline
+- Performance budgets enforced
+- Security scanning in pipeline
+
+## Key Features
+
+### Modules
+1. **Reporting Module**: Territory performance, sales data, trends
+2. **CRM Module**: Account prioritization, activity history, scheduling
+3. **Compliance Module**: Policy lookup, spending limits, procedures
+
+### Smart Input Dock Features
+- Text input (500 character limit)
+- Voice input (Apple Speech Framework)
+- Camera input (context extraction)
+- Magic Wand (prompt enhancement)
+- Coaching Toggle (compliance guardrails)
+
+## State Management
+- Three primary states:
+  1. **FAB Mode** (Collapsed): Floating action button overlay
+  2. **Dock Mode** (Quick Input): Expanded input dock
+  3. **Bento Grid Mode** (Full Screen): Command center view
+  4. **Module Expanded** (Results): Single module expanded view
+
+## API Patterns
+- RESTful API design
+- Consistent error response format
+- Request/response logging
+- Rate limiting (429 responses)
+- Versioning: `/api/v1/*`
+
+## Code Organization
+- Separate concerns (UI, business logic, data access)
+- Use dependency injection
+- Keep components small and focused
+- Document complex business logic
+- Use TypeScript types for API contracts
+
+## When Writing Code
+- Always consider mobile-first design
+- Prioritize performance (measure before optimizing)
+- Include proper error handling
+- Add loading states for async operations
+- Consider accessibility from the start
+- Write self-documenting code
+- Add comments for non-obvious logic
+- Follow existing code patterns and conventions
+
+## Questions to Ask
+- Does this improve the user experience?
+- Is this compliant with security requirements?
+- Will this perform within the required targets?
+- Is this accessible to all users?
+- Does this align with the design system?
