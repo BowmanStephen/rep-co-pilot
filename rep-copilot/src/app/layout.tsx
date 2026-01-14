@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ContextProvider } from "@/services/contextDetection";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "Rep Co-Pilot | AstraZeneca",
@@ -18,6 +19,7 @@ export default function RootLayout({
         <ContextProvider>
           {children}
         </ContextProvider>
+        <Analytics />
       </body>
     </html>
   );

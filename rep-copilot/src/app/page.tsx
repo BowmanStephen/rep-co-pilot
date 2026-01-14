@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Header from '@/components/Header';
 import TabBar, { TabType } from '@/components/TabBar';
@@ -10,6 +10,10 @@ import StreamingResponseView from '@/components/StreamingResponseView';
 import CoachingCard, { CoachingCardProps } from '@/components/CoachingCard';
 import ContextStatusBar from '@/components/ContextStatusBar';
 import { useAppContext } from '@/services/contextDetection';
+
+// Compliance trigger words (module-level constants, created once) ✅
+const MEAL_SPEND_TRIGGERS = ['expense', '$500', 'dinner', 'capital grille', 'lunch with', 'take dr'] as const;
+const OFF_LABEL_TRIGGERS = ['off-label', 'unapproved indication', 'unapproved tumor', 'draft an email', 'draft email'] as const;
 
 // Compliance detection result type
 interface CoachingResult {
@@ -23,11 +27,10 @@ interface CoachingResult {
 // Detects compliance violations in user queries
 function checkCompliance(query: string): CoachingResult | null {
   const lowerQuery = query.toLowerCase();
-  
-  // Scenario A: Meal spend triggers
-  const mealSpendTriggers = ['expense', '$500', 'dinner', 'capital grille', 'lunch with', 'take dr'];
-  const hasMealSpendViolation = mealSpendTriggers.some(trigger => lowerQuery.includes(trigger));
-  
+
+  // Scenario A: Meal spend triggers (uses module-level constants) ✅
+  const hasMealSpendViolation = MEAL_SPEND_TRIGGERS.some(trigger => lowerQuery.includes(trigger));
+
   if (hasMealSpendViolation && (lowerQuery.includes('$') || lowerQuery.includes('expense'))) {
     return {
       type: 'warning',
@@ -40,11 +43,10 @@ function checkCompliance(query: string): CoachingResult | null {
       ],
     };
   }
-  
-  // Scenario B: Off-label triggers
-  const offLabelTriggers = ['off-label', 'unapproved indication', 'unapproved tumor', 'draft an email', 'draft email'];
-  const hasOffLabelViolation = offLabelTriggers.some(trigger => lowerQuery.includes(trigger));
-  
+
+  // Scenario B: Off-label triggers (uses module-level constants) ✅
+  const hasOffLabelViolation = OFF_LABEL_TRIGGERS.some(trigger => lowerQuery.includes(trigger));
+
   if (hasOffLabelViolation) {
     return {
       type: 'stop',
@@ -57,7 +59,7 @@ function checkCompliance(query: string): CoachingResult | null {
       ],
     };
   }
-  
+
   return null;
 }
 
@@ -100,6 +102,16 @@ export default function Home() {
   const [selectedPrompt, setSelectedPrompt] = useState<string>('');
   const [coachingEnabled, setCoachingEnabled] = useState(true);
   const [coachingResult, setCoachingResult] = useState<CoachingResult | null>(null);
+
+  // Memoize prompt list to reduce re-renders on tab change ✅
+  const currentPrompts = useMemo(() => {
+    return prompts[activeTab].map((prompt, index) => ({
+      text: prompt,
+      tabType: activeTab,
+      index,
+      key: `${activeTab}-${index}`
+    }));
+  }, [activeTab]); // Only recompute when tab changes
 
   const handlePromptClick = (prompt: string) => {
     setSelectedPrompt(prompt);
@@ -246,13 +258,13 @@ export default function Home() {
               </motion.span>
             </div>
             <div className="space-y-3">
-              {prompts[activeTab].map((prompt, index) => (
+              {currentPrompts.map((props) => (
                 <PromptCard
-                  key={`${activeTab}-${index}`}
-                  text={prompt}
-                  tabType={activeTab}
-                  index={index}
-                  onClick={() => handlePromptClick(prompt)}
+                  key={props.key}
+                  text={props.text}
+                  tabType={props.tabType}
+                  index={props.index}
+                  onClick={() => handlePromptClick(props.text)}
                 />
               ))}
             </div>

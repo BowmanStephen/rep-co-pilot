@@ -1,6 +1,9 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { streamText } from 'ai';
 
+// Vercel Edge Runtime for better performance
+export const runtime = "edge";
+
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 

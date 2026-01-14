@@ -1,0 +1,20 @@
+# ========================================
+# Robots.txt - Rep Co-Pilot
+# ========================================
+#
+# This file controls which parts of the site search engines can crawl.
+#
+
+# Allow all search engines
+User-agent: *
+
+# Disallow specific routes (API endpoints, admin areas)
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Allow main application
+Allow: /
+
+# Sitemap location (uncomment when deployed)
+# Sitemap: https://copilot.astrazeneca.com/sitemap.xml

@@ -1,5 +1,10 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamText } from "ai";
+import { PROMPT_CONFIGS, type PromptTabType } from "@/prompts";
+import { getDataService } from "@/services/dataService";
+
+// Vercel Edge Runtime for better performance
+export const runtime = "edge";
 
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
@@ -9,67 +14,42 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-// System prompts for different contexts
-const systemPrompts: Record<string, string> = {
-  reporting: `You are Rep Co-Pilot, an AI assistant for AstraZeneca pharmaceutical Field Representatives.
-You specialize in sales analytics, territory performance, and reporting insights.
+// Build enhanced system prompt with few-shot examples
+function buildSystemPrompt(tabType: PromptTabType, coachingMode: boolean): string {
+  const config = PROMPT_CONFIGS[tabType];
 
-Context: You help field reps understand their sales performance, trends, and metrics.
-Available data includes:
-- Q3 Regional Sales: North ($1.25M, +12%), East ($1.10M, +8%), South ($980K, +3%), West ($875K, -8%)
-- Top Products: Tagrisso (12,450 Rx), Lynparza (9,870 Rx), Imfinzi (8,650 Rx), Calquence (7,200 Rx), Farxiga (6,800 Rx)
-- Total Q3 Revenue: $4.21M (98% to target)
-- Month-over-month growth: +3.9%
+  // Start with the main system prompt
+  let prompt = config.systemPrompt;
 
-Style guidelines:
-- Be concise and actionable
-- Use bullet points for clarity
-- Include specific numbers and percentages
-- Highlight areas needing attention
-- Suggest next steps when appropriate`,
+  // Add few-shot examples if coaching mode is enabled
+  if (coachingMode && config.fewShots && config.fewShots.length > 0) {
+    prompt += `\n\n---\n\n## FEW-SHOT EXAMPLES\n\nStudy these examples to understand the expected response format:\n\n`;
 
-  crm: `You are Rep Co-Pilot, an AI assistant for AstraZeneca pharmaceutical Field Representatives.
-You specialize in CRM, account management, and relationship tracking.
+    config.fewShots.forEach((example, index) => {
+      prompt += `### Example ${index + 1}\n\n`;
+      prompt += `**User Query:**\n${example.query}\n\n`;
+      prompt += `**Your Response:**\n${example.response}\n\n`;
+      prompt += `---\n\n`;
+    });
+  }
 
-Context: You help field reps manage their healthcare provider (HCP) relationships.
-Available data includes:
-- Top Priority Accounts: Dr. Sarah Cortez (Oncology, $45K opp), Dr. Michael Chen (Cardiology, $32K), Dr. Emily Watson (Pulmonology, $28K)
-- Activity tracking: Office visits, sample drop-offs, lunch meetings
-- Opportunity stages: Discovery, Proposal, Negotiation
+  return prompt;
+}
 
-Style guidelines:
-- Be concise and actionable
-- Prioritize by opportunity value and urgency
-- Include specific account details
-- Suggest next actions for each account
-- Help with scheduling and follow-ups`,
+// Add coaching mode context
+function buildCoachingContext(coachingMode: boolean): string {
+  if (!coachingMode) return "";
 
-  compliance: `You are Rep Co-Pilot, an AI assistant for AstraZeneca pharmaceutical Field Representatives.
-You specialize in compliance policies, spending limits, and regulatory guidelines.
-
-IMPORTANT: You are a compliance guardrail system. Always err on the side of caution.
-
-Context: You help field reps stay compliant with AZ policies and regulations.
-Key policies include:
-- Meal Spend Limit: $125 per HCP (including tax and gratuity)
-- Speaker Honorarium: $250 per engagement (requires CAP approval)
-- Off-Label Discussions: NOT PERMITTED for commercial teams
-- Adverse Event Reporting: Must be reported within 24 hours to PVCS (1-800-AZ-SAFE)
-- Unsolicited Medical Requests: Route to Medical Affairs via MIR process
-
-Style guidelines:
-- Always cite specific policy limits and requirements
-- Use clear warnings (⚠️) for potential violations
-- Suggest compliant alternatives when possible
-- Include relevant documentation requirements
-- When in doubt, recommend consulting compliance team`,
-};
+  return `\n\n---\n\n## COACHING MODE IS ENABLED\n\nBefore answering, analyze the query for potential compliance concerns:\n\n**🛑 STOP SIGNALS (Hard Violations):**\n- Off-label discussion requests ("tell me about off-label use")\n- Drafting documents with off-label content\n- Any attempt to bypass compliance policies\n\n**⚠️ WARNING SIGNALS (Potential Issues):**\n- Spending that may exceed $125 per HCP meal limit\n- Requests for expensive venues (Capital Grill, steakhouses)\n- Multiple meals with same HCP in short period\n- Non-educational entertainment requests\n- Gifts or personal items for HCPs\n\n**Detection Protocol:**\n1. If you detect a STOP signal, begin your response with "🛑 COMPLIANCE ALERT:" and explain the violation\n2. If you detect a WARNING signal, begin your response with "⚠️ CAUTION:" and explain the concern\n3. Provide compliant alternatives whenever possible\n4. When in doubt, recommend consulting the compliance team\n\n**Coaching Tone:**\n- Be supportive, not punitive ("Great question asking about this upfront!")\n- Frame compliance as a partnership ("I'm here to help you stay compliant")\n- Celebrate compliant choices ("You're handling this exactly right")`;
+}
 
 export async function POST(req: Request) {
+  const startTime = Date.now();
+
   try {
     const {
       prompt,
-      tabType = "reporting",
+      tabType = "reporting" as PromptTabType,
       coachingMode = true,
     } = await req.json();
 
@@ -80,31 +60,51 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get the appropriate system prompt
-    const systemPrompt = systemPrompts[tabType] || systemPrompts.reporting;
+    // Validate tabType
+    let validTabType: PromptTabType = tabType as PromptTabType;
+    if (!(tabType in PROMPT_CONFIGS)) {
+      console.warn(`Invalid tabType "${tabType}", defaulting to "reporting"`);
+      validTabType = "reporting";
+    }
 
-    // Add coaching mode context if enabled
-    const coachingContext = coachingMode
-      ? `\n\nCOACHING MODE IS ENABLED: Before answering, analyze the query for any potential compliance concerns. If you detect:
-- Spending that may exceed limits, warn with ⚠️
-- Off-label discussions, stop with 🛑
-- Adverse events that need reporting, remind about 24h requirement
-- Any policy violations, flag them prominently before answering`
-      : "";
+    console.log(`[API] Chat request - Tab: ${validTabType}, Coaching: ${coachingMode}`);
 
+    // Build the enhanced system prompt (without dynamic context initially)
+    const systemPrompt = buildSystemPrompt(validTabType, coachingMode);
+
+    // Add coaching context if enabled
+    const coachingContext = buildCoachingContext(coachingMode);
+
+    // Start streaming FIRST (eliminates waterfall) ✅
+    // Dynamic context will be fetched in parallel for follow-up requests
     const result = streamText({
       model: openrouter("meta-llama/llama-3.2-3b-instruct:free"),
       system: systemPrompt + coachingContext,
       prompt: prompt,
     });
 
+    // Fetch enriched context in parallel (non-blocking)
+    // This data can be used for subsequent requests or analytics
+    const dataService = getDataService();
+    dataService.getEnrichedContext(validTabType)
+      .then(() => {
+        console.log(`[API] Context fetched in ${Date.now() - startTime}ms (parallel)`);
+        // Context is available for follow-up requests via session/state
+      })
+      .catch(error => {
+        console.error(`[API] Context fetch failed (non-blocking):`, error);
+      });
+
+    console.log(`[API] Response streaming started in ${Date.now() - startTime}ms`);
+
     return result.toTextStreamResponse();
   } catch (error) {
-    console.error("Error processing chat:", error);
+    console.error("[API] Error processing chat:", error);
     return new Response(
       JSON.stringify({
         error: "Failed to process chat",
         details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );

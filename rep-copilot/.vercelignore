@@ -1,0 +1,75 @@
+# ========================================
+# Vercel Ignore - Files to Exclude from Deployment
+# ========================================
+#
+# This file tells Vercel which files/directories to skip during deployment.
+# Reduces build time and deployment size.
+#
+
+# Development files
+.env.local
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+__mocks__/
+
+# Documentation (keep in repo, not needed in deployment)
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+docs/
+*.md
+!src/prompts/**/*.md  # Keep prompt markdown files
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Development tools
+.eslintrc.js
+.prettierrc*
+.editorconfig
+
+# Misc logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+.cache/
+.temp/
+tmp/
+
+# Build artifacts (will be regenerated)
+.next/
+out/
+build/
+dist/
+
+# Node modules (installed during build)
+node_modules/
