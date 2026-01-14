@@ -1,4 +1,4 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { PROMPT_CONFIGS, type PromptTabType } from "@/prompts";
 import { getDataService } from "@/services/dataService";
@@ -9,9 +9,10 @@ export const runtime = "edge";
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
 
-// Initialize OpenRouter with API key from environment
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+// Initialize OpenRouter using OpenAI-compatible API
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY ?? '',
 });
 
 // Build enhanced system prompt with few-shot examples

@@ -1,4 +1,4 @@
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 
 // Vercel Edge Runtime for better performance
@@ -7,9 +7,10 @@ export const runtime = "edge";
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-// Initialize OpenRouter with API key from environment
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+// Initialize OpenRouter using OpenAI-compatible API
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY ?? '',
 });
 
 export async function POST(req: Request) {

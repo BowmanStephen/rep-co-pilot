@@ -90,6 +90,21 @@ rep-copilot/
 │   │   ├── MagicWandEffect.tsx  # Sparkle animation for prompt enhancement
 │   │   └── ui/                 # shadcn/ui components (Button, Input, Card, etc.)
 │   │
+│   ├── config/                 # Configuration system
+│   │   ├── env.ts              # Environment variable validation
+│   │   ├── constants.ts        # Application constants
+│   │   ├── featureFlags.ts     # Feature toggles
+│   │   └── index.ts            # Export all modules
+│   │
+│   ├── services/               # Business logic services
+│   │   ├── dataService.ts      # Unified data interface
+│   │   ├── reportingService.ts # Reporting-specific logic
+│   │   ├── crmService.ts       # CRM-specific logic
+│   │   ├── complianceService.ts # Compliance logic
+│   │   ├── mockDataService.ts  # Mock data for development
+│   │   ├── types/              # TypeScript type definitions
+│   │   └── index.ts            # Service exports
+│   │
 │   └── lib/
 │       └── utils.ts            # cn() helper for Tailwind class merging
 │
@@ -132,6 +147,106 @@ Usage: `className="bg-mulberry text-white"`
 
 ---
 
+## Configuration System
+
+**Location:** `rep-copilot/src/config/`
+
+The app uses a type-safe, validated configuration system with three main modules:
+
+### Environment Configuration (`env.ts`)
+- Validates required environment variables at startup (fail-fast)
+- Exports `env`, `isDevelopment`, `isProduction`, `isStaging`, `isStrictComplianceMode`
+- Uses `@t3-oss/env-nextjs` + Zod for runtime validation
+
+### Constants (`constants.ts`)
+- `CONFIG` - Main configuration object
+- `TABS` - Tab definitions (reporting, crm, compliance)
+- `AI_CONFIG` - AI model settings
+- `COMPLIANCE_CONFIG` - Compliance rule settings
+- `PERFORMANCE_TARGETS` - Performance SLA targets
+- `UI_CONFIG`, `API_CONFIG`, `LOG_CONFIG` - Other app settings
+
+### Feature Flags (`featureFlags.ts`)
+- `flags` - Runtime feature toggle state
+- `isFeatureEnabled(name)` - Check if a feature is enabled
+- `setFeatureEnabled(name, value)` - Toggle features
+- Supports experimental features and integration flags
+
+**Usage pattern:**
+```typescript
+import { env, isDevelopment, flags } from "@/config";
+
+const apiKey = env.OPENROUTER_API_KEY;
+if (isDevelopment) {
+  console.log("Debug info");
+}
+if (flags.enableMagicWand) {
+  // Show magic wand button
+}
+```
+
+---
+
+## Service Layer Architecture
+
+**Location:** `rep-copilot/src/services/`
+
+The app uses a layered service architecture with a unified data interface:
+
+### Unified Data Service (`dataService.ts`)
+- **Purpose:** Single entry point for all data operations
+- **Pattern:** Singleton instance with context-aware routing
+- **Usage:** `import { dataService } from '@/services'`
+
+### Specialized Services
+- **ReportingService** - Territory performance, sales metrics, trends
+- **CRMService** - Healthcare provider accounts, activities, scheduling
+- **ComplianceService** - Policy lookup, spending limits, violation checks
+- **MockDataService** - Development data when API integrations are unavailable
+
+### Type Definitions (`types/`)
+All services export shared TypeScript types:
+- `Region`, `ProductName`, `Specialty` - Core enums
+- `SalesSummary`, `HealthcareProvider`, `CompliancePolicy` - Domain models
+- `EnrichedContext`, `ApiResponse` - API contracts
+
+**Import pattern:**
+```typescript
+import { dataService } from '@/services';
+import type { SalesSummary, HealthcareProvider } from '@/services';
+
+const sales = await dataService.getSalesSummary();
+const providers = await dataService.getHealthcareProviders('North');
+```
+
+---
+
+## Environment Setup
+
+### Required Variables
+Only ONE variable is required to start the app:
+
+```bash
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+```
+
+### Setup Steps
+1. Copy environment template: `cp rep-copilot/.env.example rep-copilot/.env.local`
+2. Add your OpenRouter API key (get one at https://openrouter.ai/keys)
+3. Run `npm run dev` from the `rep-copilot/` directory
+
+### Validation
+The app fails fast on startup if required environment variables are missing. Check console for validation errors.
+
+### Environment Modes
+- **Development** - Verbose logging, source maps, debug tools
+- **Staging** - Production-like with debugging enabled
+- **Production** - Optimized builds, error-only logging
+
+Set via `NEXT_PUBLIC_APP_ENV` in `.env.local`.
+
+---
+
 ## Key Technologies
 
 | Technology | Version | Purpose |
@@ -150,6 +265,36 @@ Usage: `className="bg-mulberry text-white"`
 ---
 
 ## Common Patterns
+
+### Configuration Imports
+
+```typescript
+// Environment and feature flags
+import { env, isDevelopment, flags } from "@/config";
+
+// Constants
+import { TABS, PERFORMANCE_TARGETS, AI_CONFIG } from "@/config";
+
+// Type-safe feature flag checking
+import { isFeatureEnabled } from "@/config";
+
+if (isFeatureEnabled('enableMagicWand')) {
+  // Feature is enabled
+}
+```
+
+### Service Imports
+
+```typescript
+// Unified data service (recommended)
+import { dataService } from '@/services';
+
+// Individual services (use when needed)
+import { ReportingService, ComplianceService } from '@/services';
+
+// Type definitions
+import type { SalesSummary, HealthcareProvider } from '@/services';
+```
 
 ### The `cn()` Helper
 
@@ -310,8 +455,11 @@ className="bg-card border border-border/60 shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
 
 ## Related Documents
 
+- **README:** `rep-copilot/README.md` - Quick start guide and environment setup
 - **PRD:** `Rep Copilot PRD.md` - Original product requirements and wireframes
 - **Cursor Rules:** `.cursorrules` - Technical specifications and performance requirements
+- **Config Docs:** `rep-copilot/docs/CONFIGURATION_SYSTEM.md` - Full configuration reference
+- **Quick Reference:** `rep-copilot/docs/CONFIG_QUICK_REFERENCE.md` - Configuration cheat sheet
 
 ---
 
